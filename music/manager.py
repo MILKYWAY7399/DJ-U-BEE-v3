@@ -5,6 +5,7 @@ import wavelink
 
 from models.song import Song
 from music.guild_state import GuildState
+from music.loop_mode import LoopMode
 from ui.player_view import PlayerView
 
 
@@ -36,9 +37,27 @@ class MusicManager:
 
         song = state.current
 
+        loop_text = {
+            LoopMode.OFF: "Off",
+            LoopMode.TRACK: "Track",
+            LoopMode.QUEUE: "Queue",
+        }[state.loop_mode]
+
+        status_text = (
+            "⏸ Paused"
+            if state.player is not None
+            and state.player.paused
+            else "▶ Playing"
+        )
+
         embed = discord.Embed(
             title="🎵 DJ U BEE",
-            description=f"## {song.title}\n**{song.artist}**",
+            description=(
+                f"## {song.title}\n"
+                f"**{song.artist}**\n\n"
+                f"{status_text}\n"
+                f"🔁 **Loop:** {loop_text}"
+            ),
             color=0x5865F2,
         )
 
@@ -157,8 +176,23 @@ class MusicManager:
             player.guild.id
         )
 
+        if state.current is not None:
+            if state.loop_mode == LoopMode.TRACK:
+                await player.play(
+                    state.current.track
+                )
+                return
+
+            if state.loop_mode == LoopMode.QUEUE:
+                state.queue.append(
+                    state.current
+                )
+
         if not state.queue:
             state.current = None
+            await self.update_player(
+                player.guild.id
+            )
             return
 
         next_song = state.queue.pop(0)
@@ -206,14 +240,50 @@ class MusicManager:
         if player is None:
             return None
 
-        print(f"playing={player.playing} paused={player.paused}")
-
         if player.paused:
             await player.pause(False)
+            await self.update_player(
+                guild_id
+            )
             return "resumed"
 
         if player.playing:
             await player.pause(True)
+            await self.update_player(
+                guild_id
+            )
             return "paused"
 
         return None
+
+    def get_queue(
+        self,
+        guild_id: int,
+    ) -> tuple[Song | None, list[Song]]:
+        state = self.get_state(
+            guild_id
+        )
+
+        return (
+            state.current,
+            state.queue.copy(),
+        )
+
+    def cycle_loop_mode(
+        self,
+        guild_id: int,
+    ) -> LoopMode:
+        state = self.get_state(
+            guild_id
+        )
+
+        if state.loop_mode == LoopMode.OFF:
+            state.loop_mode = LoopMode.TRACK
+
+        elif state.loop_mode == LoopMode.TRACK:
+            state.loop_mode = LoopMode.QUEUE
+
+        else:
+            state.loop_mode = LoopMode.OFF
+
+        return state.loop_mode

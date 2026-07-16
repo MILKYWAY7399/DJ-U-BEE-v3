@@ -1,5 +1,7 @@
 import discord
 
+from music.loop_mode import LoopMode
+
 
 class PreviousButton(discord.ui.Button):
     def __init__(self):
@@ -95,8 +97,25 @@ class LoopButton(discord.ui.Button):
         self,
         interaction: discord.Interaction,
     ):
+        mode = interaction.client.music.cycle_loop_mode(
+            interaction.guild.id
+        )
+
+        await interaction.client.music.update_player(
+            interaction.guild.id
+        )
+
+        if mode == LoopMode.OFF:
+            message = "🔁 Loop disabled."
+
+        elif mode == LoopMode.TRACK:
+            message = "🔂 Track loop enabled."
+
+        else:
+            message = "🔁 Queue loop enabled."
+
         await interaction.response.send_message(
-            "🔁 Coming soon.",
+            message,
             ephemeral=True,
         )
 
@@ -112,8 +131,47 @@ class QueueButton(discord.ui.Button):
         self,
         interaction: discord.Interaction,
     ):
+        current, queue = (
+            interaction.client.music.get_queue(
+                interaction.guild.id
+            )
+        )
+
+        if current is None:
+            await interaction.response.send_message(
+                "📜 Queue is empty.",
+                ephemeral=True,
+            )
+            return
+
+        description = (
+            f"▶ **Now Playing**\n"
+            f"{current.title}"
+        )
+
+        if queue:
+            description += "\n\n**Up Next**\n"
+
+            for i, song in enumerate(
+                queue,
+                start=1,
+            ):
+                description += (
+                    f"{i}. {song.title}\n"
+                )
+
+        embed = discord.Embed(
+            title="📜 Queue",
+            description=description,
+            color=0x5865F2,
+        )
+
+        embed.set_footer(
+            text=f"{len(queue)} song(s) queued"
+        )
+
         await interaction.response.send_message(
-            "📜 Coming soon.",
+            embed=embed,
             ephemeral=True,
         )
 

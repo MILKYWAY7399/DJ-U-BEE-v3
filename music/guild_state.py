@@ -4,6 +4,7 @@ import discord
 import wavelink
 
 from models.song import Song
+from music.loop_mode import LoopMode
 
 
 @dataclass(slots=True)
@@ -15,6 +16,8 @@ class GuildState:
     queue: list[Song] = field(
         default_factory=list
     )
+
+    loop_mode: LoopMode = LoopMode.OFF
 
     text_channel: discord.TextChannel | None = None
 
