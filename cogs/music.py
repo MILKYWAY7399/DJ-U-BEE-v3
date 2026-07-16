@@ -76,14 +76,19 @@ class Music(commands.Cog):
                 interaction.user.id,
             )
 
-            await self.music.play(
+            playing = await self.music.play(
                 interaction,
                 song,
             )
 
-            await interaction.followup.send(
-                f"🎵 Now Playing **{song.title}**"
-            )
+            if playing:
+                await interaction.followup.send(
+                    f"🎵 Now Playing **{song.title}**"
+                )
+            else:
+                await interaction.followup.send(
+                    f"➕ Queued **{song.title}**"
+                )
 
         except RuntimeError as e:
             await interaction.followup.send(

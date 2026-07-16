@@ -1,12 +1,25 @@
+from collections import defaultdict
+
 import discord
 import wavelink
 
 from models.song import Song
+from music.guild_state import GuildState
 
 
 class MusicManager:
     def __init__(self, bot):
         self.bot = bot
+
+        self.guilds: dict[int, GuildState] = defaultdict(
+            GuildState
+        )
+
+    def get_state(
+        self,
+        guild_id: int,
+    ) -> GuildState:
+        return self.guilds[guild_id]
 
     async def join(
         self,
@@ -38,11 +51,20 @@ class MusicManager:
 
         await player.disconnect()
 
+        self.guilds.pop(
+            interaction.guild.id,
+            None,
+        )
+
     async def play(
         self,
         interaction: discord.Interaction,
         song: Song,
     ):
+        state = self.get_state(
+            interaction.guild.id
+        )
+
         player: wavelink.Player | None = interaction.guild.voice_client
 
         if player is None:
@@ -50,4 +72,14 @@ class MusicManager:
                 interaction
             )
 
-        await player.play(song.track)
+        if player.playing:
+            state.queue.append(song)
+            return False
+
+        state.current = song
+
+        await player.play(
+            song.track
+        )
+
+        return True
