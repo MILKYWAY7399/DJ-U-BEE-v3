@@ -45,10 +45,7 @@ class MusicManager:
             guild_id
         )
 
-        if (
-            state.current is None
-            or state.text_channel is None
-        ):
+        if state.text_channel is None:
             return
 
         embed = build_player_embed(
@@ -61,20 +58,26 @@ class MusicManager:
                 state.player_message = (
                     await state.text_channel.send(
                         embed=embed,
-                        view=PlayerView(),
+                        view=PlayerView(
+                            enabled=state.current is not None
+                        ),
                     )
                 )
             else:
                 await state.player_message.edit(
                     embed=embed,
-                    view=PlayerView(),
+                    view=PlayerView(
+                        enabled=state.current is not None
+                    ),
                 )
 
         except discord.NotFound:
             state.player_message = (
                 await state.text_channel.send(
                     embed=embed,
-                    view=PlayerView(),
+                    view=PlayerView(
+                        enabled=state.current is not None
+                    ),
                 )
             )
 
@@ -318,6 +321,31 @@ class MusicManager:
             state.current,
             state.queue.copy(),
         )
+
+    async def stop(
+        self,
+        guild_id: int,
+    ) -> bool:
+        state = self.get_state(
+            guild_id
+        )
+
+        player = state.player
+
+        if player is None:
+            return False
+
+        state.queue.clear()
+        state.history.clear()
+        state.current = None
+
+        await player.stop()
+
+        await self.update_player(
+            guild_id
+        )
+
+        return True
 
     def cycle_loop_mode(
         self,

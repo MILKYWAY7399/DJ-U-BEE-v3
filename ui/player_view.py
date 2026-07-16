@@ -213,8 +213,38 @@ class ShuffleButton(discord.ui.Button):
                 ephemeral=True,
             )
 
-class PlayerView(discord.ui.View):
+class StopButton(discord.ui.Button):
     def __init__(self):
+        super().__init__(
+            emoji="⏹",
+            style=discord.ButtonStyle.danger,
+            row=2,
+        )
+
+    async def callback(
+        self,
+        interaction: discord.Interaction,
+    ):
+        success = await interaction.client.music.stop(
+            interaction.guild.id
+        )
+
+        if success:
+            await interaction.response.send_message(
+                "⏹ Playback stopped.",
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "❌ Nothing is playing.",
+                ephemeral=True,
+            )
+
+class PlayerView(discord.ui.View):
+    def __init__(
+        self,
+        enabled: bool = True,
+    ):
         super().__init__(
             timeout=None
         )
@@ -225,3 +255,14 @@ class PlayerView(discord.ui.View):
         self.add_item(LoopButton())
         self.add_item(QueueButton())
         self.add_item(ShuffleButton())
+        self.add_item(StopButton())
+
+        if not enabled:
+            for item in self.children:
+                if isinstance(
+                    item,
+                    QueueButton,
+                ):
+                    continue
+
+                item.disabled = True
