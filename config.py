@@ -15,7 +15,25 @@ LAVALINK_PASSWORD = os.getenv(
     "youshallnotpass",
 )
 
+SPOTIFY_CLIENT_ID = os.getenv(
+    "SPOTIFY_CLIENT_ID"
+)
+
+SPOTIFY_CLIENT_SECRET = os.getenv(
+    "SPOTIFY_CLIENT_SECRET"
+)
+
 if not DISCORD_TOKEN:
     raise RuntimeError(
         "DISCORD_TOKEN not found."
+    )
+
+if not SPOTIFY_CLIENT_ID:
+    raise RuntimeError(
+        "SPOTIFY_CLIENT_ID not found."
+    )
+
+if not SPOTIFY_CLIENT_SECRET:
+    raise RuntimeError(
+        "SPOTIFY_CLIENT_SECRET not found."
     )

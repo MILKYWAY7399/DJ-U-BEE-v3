@@ -11,6 +11,7 @@ class Music(commands.Cog):
 
         self.music = bot.music
         self.lavalink = bot.lavalink
+        self.spotify = bot.spotify
 
     @app_commands.command(
         name="join",
@@ -71,6 +72,86 @@ class Music(commands.Cog):
         query: str,
     ):
         try:
+
+            # ---------- Spotify Track ----------
+            if "open.spotify.com/track/" in query:
+                title, artist = (
+                    await self.spotify.get_track(
+                        query
+                    )
+                )
+
+                query = (
+                    f"{title} {artist}"
+                )
+
+                songs = await self.lavalink.search_many(
+                    query,
+                    interaction.user.id,
+                )
+
+                embed = discord.Embed(
+                    title="🔍 Search Results",
+                    description="Choose the song you want to play.",
+                    color=0x5865F2,
+                )
+
+                await interaction.response.send_message(
+                    embed=embed,
+                    view=SearchView(songs),
+                    ephemeral=True,
+                )
+
+                return
+
+            # ---------- Spotify Album ----------
+            if "open.spotify.com/album/" in query:
+
+                await interaction.response.defer()
+
+                tracks = await self.spotify.get_album(
+                    query
+                )
+
+                await self.music.join(
+                    interaction
+                )
+
+                added = 0
+
+                for title, artist in tracks:
+
+                    print(
+                        f"Searching: {title} - {artist}"
+                    )
+
+                    try:
+                        song = await self.lavalink.search(
+                            f"{title} {artist}",
+                            interaction.user.id,
+                        )
+
+                        await self.music.play(
+                            interaction,
+                            song,
+                        )
+
+                        added += 1
+
+                    except Exception as e:
+                        print(
+                            f"Skipped: {title} - {artist}"
+                        )
+                        print(e)
+
+                await interaction.followup.send(
+                    f"💿 Added **{added}** songs to the queue."
+                )
+
+                return
+
+            # ---------- Normal Search ----------
+
             songs = await self.lavalink.search_many(
                 query,
                 interaction.user.id,
@@ -89,10 +170,16 @@ class Music(commands.Cog):
             )
 
         except RuntimeError as e:
-            await interaction.response.send_message(
-                f"❌ {e}",
-                ephemeral=True,
-            )
+            if interaction.response.is_done():
+                await interaction.followup.send(
+                    f"❌ {e}",
+                    ephemeral=True,
+                )
+            else:
+                await interaction.response.send_message(
+                    f"❌ {e}",
+                    ephemeral=True,
+                )
 
 
 async def setup(bot):
