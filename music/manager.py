@@ -5,6 +5,7 @@ import wavelink
 
 from models.song import Song
 from music.guild_state import GuildState
+from ui.player_view import PlayerView
 
 
 class MusicManager:
@@ -21,6 +22,53 @@ class MusicManager:
     ) -> GuildState:
         return self.guilds[guild_id]
 
+    async def update_player(
+        self,
+        guild_id: int,
+    ):
+        state = self.get_state(guild_id)
+
+        if (
+            state.current is None
+            or state.text_channel is None
+        ):
+            return
+
+        song = state.current
+
+        embed = discord.Embed(
+            title="🎵 DJ U BEE",
+            description=f"## {song.title}\n**{song.artist}**",
+            color=0x5865F2,
+        )
+
+        if song.thumbnail:
+            embed.set_thumbnail(
+                url=song.thumbnail
+            )
+
+        try:
+            if state.player_message is None:
+                state.player_message = (
+                    await state.text_channel.send(
+                        embed=embed,
+                        view=PlayerView(),
+                    )
+                )
+            else:
+                await state.player_message.edit(
+                    embed=embed,
+                    view=PlayerView(),
+                )
+
+        except discord.NotFound:
+            state.player_message = (
+                await state.text_channel.send(
+                    embed=embed,
+                    view=PlayerView(),
+                )
+            )
+
     async def join(
         self,
         interaction: discord.Interaction,
@@ -30,11 +78,20 @@ class MusicManager:
                 "You must join a voice channel first."
             )
 
+        state = self.get_state(
+            interaction.guild.id
+        )
+
+        if state.player is not None:
+            return state.player
+
         channel = interaction.user.voice.channel
 
         player: wavelink.Player = await channel.connect(
             cls=wavelink.Player
         )
+
+        state.player = player
 
         return player
 
@@ -42,14 +99,16 @@ class MusicManager:
         self,
         interaction: discord.Interaction,
     ):
-        player: wavelink.Player | None = interaction.guild.voice_client
+        state = self.get_state(
+            interaction.guild.id
+        )
 
-        if player is None:
+        if state.player is None:
             raise RuntimeError(
                 "I'm not connected."
             )
 
-        await player.disconnect()
+        await state.player.disconnect()
 
         self.guilds.pop(
             interaction.guild.id,
@@ -65,7 +124,9 @@ class MusicManager:
             interaction.guild.id
         )
 
-        player: wavelink.Player | None = interaction.guild.voice_client
+        state.text_channel = interaction.channel
+
+        player = state.player
 
         if player is None:
             player = await self.join(
@@ -78,7 +139,13 @@ class MusicManager:
 
         state.current = song
 
-        await player.play(song.track)
+        await player.play(
+            song.track
+        )
+
+        await self.update_player(
+            interaction.guild.id
+        )
 
         return True
 
@@ -100,4 +167,8 @@ class MusicManager:
 
         await player.play(
             next_song.track
+        )
+
+        await self.update_player(
+            player.guild.id
         )
