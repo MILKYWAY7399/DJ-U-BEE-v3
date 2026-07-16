@@ -1,9 +1,14 @@
 from pathlib import Path
 
 import discord
+import wavelink
 from discord.ext import commands
 
-from config import DISCORD_TOKEN
+from config import (
+    DISCORD_TOKEN,
+    LAVALINK_PASSWORD,
+    LAVALINK_URI,
+)
 
 
 class DJUBEE(commands.Bot):
@@ -16,6 +21,19 @@ class DJUBEE(commands.Bot):
         )
 
     async def setup_hook(self):
+        node = wavelink.Node(
+            identifier="main",
+            uri=LAVALINK_URI,
+            password=LAVALINK_PASSWORD,
+        )
+
+        await wavelink.Pool.connect(
+            nodes=[node],
+            client=self,
+        )
+
+        print("✅ Connected to Lavalink")
+
         cogs_path = Path(__file__).parent / "cogs"
 
         for file in cogs_path.glob("*.py"):
