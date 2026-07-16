@@ -78,8 +78,26 @@ class MusicManager:
 
         state.current = song
 
-        await player.play(
-            song.track
-        )
+        await player.play(song.track)
 
         return True
+
+    async def play_next(
+        self,
+        player: wavelink.Player,
+    ):
+        state = self.get_state(
+            player.guild.id
+        )
+
+        if not state.queue:
+            state.current = None
+            return
+
+        next_song = state.queue.pop(0)
+
+        state.current = next_song
+
+        await player.play(
+            next_song.track
+        )
