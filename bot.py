@@ -9,6 +9,8 @@ from config import (
     LAVALINK_PASSWORD,
     LAVALINK_URI,
 )
+from music.manager import MusicManager
+from providers.lavalink import LavalinkProvider
 
 
 class DJUBEE(commands.Bot):
@@ -19,6 +21,9 @@ class DJUBEE(commands.Bot):
             command_prefix="!",
             intents=intents,
         )
+
+        self.music = MusicManager(self)
+        self.provider = LavalinkProvider()
 
     async def setup_hook(self):
         node = wavelink.Node(

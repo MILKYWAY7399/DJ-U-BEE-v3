@@ -2,16 +2,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from music.manager import MusicManager
-from providers.lavalink import LavalinkProvider
-
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.music = MusicManager(bot)
-        self.provider = LavalinkProvider()
+        self.music = bot.music
+        self.provider = bot.provider
 
     @app_commands.command(
         name="join",
