@@ -22,3 +22,16 @@ class MusicManager:
         )
 
         return player
+
+    async def leave(
+        self,
+        interaction: discord.Interaction,
+    ):
+        player: wavelink.Player | None = interaction.guild.voice_client
+
+        if player is None:
+            raise RuntimeError(
+                "I'm not connected."
+            )
+
+        await player.disconnect()

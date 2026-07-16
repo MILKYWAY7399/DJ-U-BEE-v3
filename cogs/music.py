@@ -33,6 +33,29 @@ class Music(commands.Cog):
                 ephemeral=True,
             )
 
+    @app_commands.command(
+        name="leave",
+        description="Leave the voice channel.",
+    )
+    async def leave(
+        self,
+        interaction: discord.Interaction,
+    ):
+        try:
+            await self.music.leave(
+                interaction
+            )
+
+            await interaction.response.send_message(
+                "👋 Disconnected."
+            )
+
+        except RuntimeError as e:
+            await interaction.response.send_message(
+                f"❌ {e}",
+                ephemeral=True,
+            )
+
 
 async def setup(bot):
     await bot.add_cog(
