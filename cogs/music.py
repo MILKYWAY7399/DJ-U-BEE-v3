@@ -10,7 +10,7 @@ class Music(commands.Cog):
         self.bot = bot
 
         self.music = bot.music
-        self.provider = bot.provider
+        self.lavalink = bot.lavalink
 
     @app_commands.command(
         name="join",
@@ -71,7 +71,7 @@ class Music(commands.Cog):
         query: str,
     ):
         try:
-            songs = await self.provider.search_many(
+            songs = await self.lavalink.search_many(
                 query,
                 interaction.user.id,
             )

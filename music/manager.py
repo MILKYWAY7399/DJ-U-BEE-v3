@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import discord
 import wavelink
+import random
 
 from models.song import Song
 from music.guild_state import GuildState
@@ -276,6 +277,27 @@ class MusicManager:
 
         await player.play(
             state.current.track
+        )
+
+        await self.update_player(
+            guild_id
+        )
+
+        return True
+
+    async def shuffle(
+        self,
+        guild_id: int,
+    ) -> bool:
+        state = self.get_state(
+            guild_id
+        )
+
+        if len(state.queue) < 2:
+            return False
+
+        random.shuffle(
+            state.queue
         )
 
         await self.update_player(

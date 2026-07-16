@@ -186,6 +186,33 @@ class QueueButton(discord.ui.Button):
         )
 
 
+class ShuffleButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(
+            emoji="🔀",
+            style=discord.ButtonStyle.secondary,
+            row=2,
+        )
+
+    async def callback(
+        self,
+        interaction: discord.Interaction,
+    ):
+        success = await interaction.client.music.shuffle(
+            interaction.guild.id
+        )
+
+        if success:
+            await interaction.response.send_message(
+                "🔀 Queue shuffled.",
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "❌ Need at least 2 queued songs.",
+                ephemeral=True,
+            )
+
 class PlayerView(discord.ui.View):
     def __init__(self):
         super().__init__(
@@ -197,3 +224,4 @@ class PlayerView(discord.ui.View):
         self.add_item(SkipButton())
         self.add_item(LoopButton())
         self.add_item(QueueButton())
+        self.add_item(ShuffleButton())

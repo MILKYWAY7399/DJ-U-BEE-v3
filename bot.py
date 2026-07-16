@@ -23,7 +23,7 @@ class DJUBEE(commands.Bot):
         )
 
         self.music = MusicManager(self)
-        self.provider = LavalinkProvider()
+        self.lavalink = LavalinkProvider()
 
     async def setup_hook(self):
         node = wavelink.Node(
