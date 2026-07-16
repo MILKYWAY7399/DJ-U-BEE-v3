@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import re
 
 from ui.search_view import SearchView
 
@@ -181,6 +182,83 @@ class Music(commands.Cog):
                     ephemeral=True,
                 )
 
+
+    @app_commands.command(
+        name="playlist",
+        description="Import Spotify playlist from pasted track links.",
+    )
+    @app_commands.describe(
+        tracks="Paste Spotify track links (one per line)"
+    )
+    async def playlist(
+        self,
+        interaction: discord.Interaction,
+        tracks: str,
+    ):
+        print(repr(tracks))
+        await interaction.response.defer()
+
+        # urls = [
+        #     line.strip()
+        #     for line in tracks.split()
+        #     if "open.spotify.com/track/" in line
+        # ]
+
+        urls = re.findall(
+            r"https://open\.spotify\.com/track/[^\s]+",
+            tracks,
+        )
+
+        if not urls:
+            await interaction.followup.send(
+                "❌ No Spotify track links found."
+            )
+            return
+
+        await self.music.join(
+            interaction
+        )
+
+        added = 0
+        skipped = 0
+
+        for url in urls:
+            try:
+                title, artist = (
+                    await self.spotify.get_track(
+                        url
+                    )
+                )
+
+                song = await self.lavalink.search(
+                    f"{title} {artist}",
+                    interaction.user.id,
+                )
+
+                await self.music.play(
+                    interaction,
+                    song,
+                )
+
+                added += 1
+
+            except Exception as e:
+                skipped += 1
+                print(f"Skipped: {url}")
+                print(e)
+
+        embed = discord.Embed(
+            title="📋 Playlist Imported",
+            description=(
+                f"✅ Added: **{added}**\n"
+                f"❌ Skipped: **{skipped}**"
+            ),
+            color=0x5865F2,
+        )
+
+        await interaction.followup.send(
+            embed=embed
+        )
 
 async def setup(bot):
     await bot.add_cog(
