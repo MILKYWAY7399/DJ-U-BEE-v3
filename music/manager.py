@@ -1,6 +1,8 @@
 import discord
 import wavelink
 
+from models.song import Song
+
 
 class MusicManager:
     def __init__(self, bot):
@@ -35,3 +37,17 @@ class MusicManager:
             )
 
         await player.disconnect()
+
+    async def play(
+        self,
+        interaction: discord.Interaction,
+        song: Song,
+    ):
+        player: wavelink.Player | None = interaction.guild.voice_client
+
+        if player is None:
+            player = await self.join(
+                interaction
+            )
+
+        await player.play(song.track)

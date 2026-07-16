@@ -3,12 +3,15 @@ from discord import app_commands
 from discord.ext import commands
 
 from music.manager import MusicManager
+from providers.lavalink import LavalinkProvider
 
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
         self.music = MusicManager(bot)
+        self.provider = LavalinkProvider()
 
     @app_commands.command(
         name="join",
@@ -54,6 +57,40 @@ class Music(commands.Cog):
             await interaction.response.send_message(
                 f"❌ {e}",
                 ephemeral=True,
+            )
+
+    @app_commands.command(
+        name="play",
+        description="Play a song.",
+    )
+    @app_commands.describe(
+        query="Song name or URL"
+    )
+    async def play(
+        self,
+        interaction: discord.Interaction,
+        query: str,
+    ):
+        await interaction.response.defer()
+
+        try:
+            song = await self.provider.search(
+                query,
+                interaction.user.id,
+            )
+
+            await self.music.play(
+                interaction,
+                song,
+            )
+
+            await interaction.followup.send(
+                f"🎵 Now Playing **{song.title}**"
+            )
+
+        except RuntimeError as e:
+            await interaction.followup.send(
+                f"❌ {e}"
             )
 
 
