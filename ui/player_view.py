@@ -14,10 +14,20 @@ class PreviousButton(discord.ui.Button):
         self,
         interaction: discord.Interaction,
     ):
-        await interaction.response.send_message(
-            "⏮ Coming soon.",
-            ephemeral=True,
+        success = await interaction.client.music.previous(
+            interaction.guild.id
         )
+
+        if success:
+            await interaction.response.send_message(
+                "⏮ Playing previous song.",
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "❌ No previous song.",
+                ephemeral=True,
+            )
 
 
 class PauseButton(discord.ui.Button):

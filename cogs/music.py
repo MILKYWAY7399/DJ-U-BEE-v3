@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from ui.search_view import SearchView
+
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -68,31 +70,28 @@ class Music(commands.Cog):
         interaction: discord.Interaction,
         query: str,
     ):
-        await interaction.response.defer()
-
         try:
-            song = await self.provider.search(
+            songs = await self.provider.search_many(
                 query,
                 interaction.user.id,
             )
 
-            playing = await self.music.play(
-                interaction,
-                song,
+            embed = discord.Embed(
+                title="🔍 Search Results",
+                description="Choose the song you want to play.",
+                color=0x5865F2,
             )
 
-            if playing:
-                await interaction.followup.send(
-                    f"🎵 Now Playing **{song.title}**"
-                )
-            else:
-                await interaction.followup.send(
-                    f"➕ Queued **{song.title}**"
-                )
+            await interaction.response.send_message(
+                embed=embed,
+                view=SearchView(songs),
+                ephemeral=True,
+            )
 
         except RuntimeError as e:
-            await interaction.followup.send(
-                f"❌ {e}"
+            await interaction.response.send_message(
+                f"❌ {e}",
+                ephemeral=True,
             )
 
 

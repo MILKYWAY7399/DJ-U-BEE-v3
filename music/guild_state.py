@@ -13,6 +13,10 @@ class GuildState:
 
     current: Song | None = None
 
+    history: list[Song] = field(
+        default_factory=list
+    )
+
     queue: list[Song] = field(
         default_factory=list
     )

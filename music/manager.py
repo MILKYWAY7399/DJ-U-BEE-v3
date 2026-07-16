@@ -7,7 +7,7 @@ from models.song import Song
 from music.guild_state import GuildState
 from music.loop_mode import LoopMode
 from ui.player_view import PlayerView
-
+from ui.player_embed import build_player_embed
 
 class MusicManager:
     def __init__(self, bot):
@@ -16,6 +16,19 @@ class MusicManager:
         self.guilds: dict[int, GuildState] = defaultdict(
             GuildState
         )
+
+    def push_history(
+        self,
+        guild_id: int,
+    ):
+        state = self.get_state(
+            guild_id
+        )
+
+        if state.current is not None:
+            state.history.append(
+                state.current
+            )
 
     def get_state(
         self,
@@ -27,7 +40,9 @@ class MusicManager:
         self,
         guild_id: int,
     ):
-        state = self.get_state(guild_id)
+        state = self.get_state(
+            guild_id
+        )
 
         if (
             state.current is None
@@ -35,36 +50,10 @@ class MusicManager:
         ):
             return
 
-        song = state.current
-
-        loop_text = {
-            LoopMode.OFF: "Off",
-            LoopMode.TRACK: "Track",
-            LoopMode.QUEUE: "Queue",
-        }[state.loop_mode]
-
-        status_text = (
-            "⏸ Paused"
-            if state.player is not None
-            and state.player.paused
-            else "▶ Playing"
+        embed = build_player_embed(
+            self.bot,
+            state,
         )
-
-        embed = discord.Embed(
-            title="🎵 DJ U BEE",
-            description=(
-                f"## {song.title}\n"
-                f"**{song.artist}**\n\n"
-                f"{status_text}\n"
-                f"🔁 **Loop:** {loop_text}"
-            ),
-            color=0x5865F2,
-        )
-
-        if song.thumbnail:
-            embed.set_thumbnail(
-                url=song.thumbnail
-            )
 
         try:
             if state.player_message is None:
@@ -188,6 +177,11 @@ class MusicManager:
                     state.current
                 )
 
+            # Save finished song to history
+            self.push_history(
+                player.guild.id
+            )
+
         if not state.queue:
             state.current = None
             await self.update_player(
@@ -255,6 +249,40 @@ class MusicManager:
             return "paused"
 
         return None
+
+    async def previous(
+        self,
+        guild_id: int,
+    ) -> bool:
+        state = self.get_state(
+            guild_id
+        )
+
+        player = state.player
+
+        if (
+            player is None
+            or not state.history
+        ):
+            return False
+
+        if state.current is not None:
+            state.queue.insert(
+                0,
+                state.current,
+            )
+
+        state.current = state.history.pop()
+
+        await player.play(
+            state.current.track
+        )
+
+        await self.update_player(
+            guild_id
+        )
+
+        return True
 
     def get_queue(
         self,
