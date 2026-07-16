@@ -192,3 +192,28 @@ class MusicManager:
         await player.skip()
 
         return True
+
+    async def pause_resume(
+        self,
+        guild_id: int,
+    ) -> str | None:
+        state = self.get_state(
+            guild_id
+        )
+
+        player = state.player
+
+        if player is None:
+            return None
+
+        print(f"playing={player.playing} paused={player.paused}")
+
+        if player.paused:
+            await player.pause(False)
+            return "resumed"
+
+        if player.playing:
+            await player.pause(True)
+            return "paused"
+
+        return None

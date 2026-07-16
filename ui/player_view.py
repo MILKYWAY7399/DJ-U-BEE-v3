@@ -29,8 +29,30 @@ class PauseButton(discord.ui.Button):
         self,
         interaction: discord.Interaction,
     ):
-        await interaction.response.send_message(
-            "⏸ Coming soon.",
+        result = await interaction.client.music.pause_resume(
+            interaction.guild.id
+        )
+
+        if result is None:
+            await interaction.response.send_message(
+                "❌ Nothing is playing.",
+                ephemeral=True,
+            )
+            return
+
+        if result == "paused":
+            self.emoji = "▶️"
+            message = "⏸ Paused."
+        else:
+            self.emoji = "⏸"
+            message = "▶️ Resumed."
+
+        await interaction.response.edit_message(
+            view=self.view
+        )
+
+        await interaction.followup.send(
+            message,
             ephemeral=True,
         )
 
