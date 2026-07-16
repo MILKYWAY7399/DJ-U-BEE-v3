@@ -172,3 +172,23 @@ class MusicManager:
         await self.update_player(
             player.guild.id
         )
+
+    async def skip(
+        self,
+        guild_id: int,
+    ) -> bool:
+        state = self.get_state(
+            guild_id
+        )
+
+        player = state.player
+
+        if (
+            player is None
+            or not player.playing
+        ):
+            return False
+
+        await player.skip()
+
+        return True

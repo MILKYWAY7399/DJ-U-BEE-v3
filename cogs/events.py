@@ -11,10 +11,9 @@ class MusicEvents(commands.Cog):
         self,
         payload: wavelink.TrackEndEventPayload,
     ):
-        if payload.player is None:
-            return
+        print("Reason:", payload.reason)
 
-        if payload.reason != "finished":
+        if payload.player is None:
             return
 
         await self.bot.music.play_next(

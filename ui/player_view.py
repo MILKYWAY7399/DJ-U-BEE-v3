@@ -46,10 +46,20 @@ class SkipButton(discord.ui.Button):
         self,
         interaction: discord.Interaction,
     ):
-        await interaction.response.send_message(
-            "⏭ Coming soon.",
-            ephemeral=True,
+        success = await interaction.client.music.skip(
+            interaction.guild.id
         )
+
+        if success:
+            await interaction.response.send_message(
+                "⏭ Skipped.",
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "❌ Nothing to skip.",
+                ephemeral=True,
+            )
 
 
 class LoopButton(discord.ui.Button):
