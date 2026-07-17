@@ -2,9 +2,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import re
+import uuid
 
 from ui.search_view import SearchView
 from ui.lastfm_login_view import LastFMLoginView
+from models.song import Song
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -14,6 +16,7 @@ class Music(commands.Cog):
         self.lavalink = bot.lavalink
         self.spotify = bot.spotify
         self.lastfm_provider = bot.lastfm
+        self.autocomplete_cache: dict[str, Song] = {}
 
     lastfm = app_commands.Group(
         name="lastfm",
@@ -192,13 +195,59 @@ class Music(commands.Cog):
                 f"❌ {e}",
                 ephemeral=True,
             )
+    async def play_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        if len(current) < 2:
+            return []
 
+        try:
+            songs = await self.lavalink.search_many(
+                current,
+                interaction.user.id,
+                limit=25,
+            )
+
+        except Exception:
+            return []
+
+        seen = set()
+        choices = []
+
+        for song in songs:
+            name = f"{song.artist} - {song.title}"
+
+            if name in seen:
+                continue
+
+            seen.add(name)
+
+            key = uuid.uuid4().hex[:8]
+
+            self.autocomplete_cache[key] = song
+
+            choices.append(
+                app_commands.Choice(
+                    name=name[:100],
+                    value=key,
+                )
+            )
+
+            if len(choices) == 25:
+                break
+
+        return choices
     @app_commands.command(
         name="play",
         description="Play a song.",
     )
     @app_commands.describe(
         query="Song name or URL"
+    )
+    @app_commands.autocomplete(
+        query=play_autocomplete
     )
     
     async def play(
@@ -208,7 +257,28 @@ class Music(commands.Cog):
     ):
         try:
 
-            # Spotiy track
+            if query in self.autocomplete_cache:
+                song = self.autocomplete_cache.pop(query)
+
+                played = await self.music.play(
+                    interaction,
+                    song,
+                )
+
+                if played:
+                    await interaction.response.send_message(
+                        f"▶️ Now playing **{song.title}**",
+                        ephemeral=True,
+                    )
+                else:
+                    await interaction.response.send_message(
+                        f"➕ Added **{song.title}** to the queue.",
+                        ephemeral=True,
+                    )
+
+                return
+
+            # Spotify track
             if "open.spotify.com/track/" in query:
                 title, artist = (
                     await self.spotify.get_track(
@@ -402,37 +472,25 @@ class Music(commands.Cog):
         self,
         interaction: discord.Interaction,
     ):
-        print("1 - Command received")
 
         await interaction.response.defer()
-
-        print("2 - Deferred")
 
         state = self.music.get_state(
             interaction.guild.id
         )
 
-        print("3 - Got state")
-
         if state.current is None:
-            print("4 - No current song")
             await interaction.followup.send(
                 "❌ Nothing is currently playing.",
                 ephemeral=True,
             )
             return
 
-        print(
-            f"5 - Searching lyrics for: {state.current.artist} - {state.current.title}"
-        )
-
         try:
             data = await self.bot.lyrics.search(
                 state.current.artist,
                 state.current.title,
             )
-
-            print("6 - API returned:", data)
 
         except Exception as e:
             import traceback
@@ -447,7 +505,6 @@ class Music(commands.Cog):
             return
 
         if data is None:
-            print("7 - No lyrics found")
             await interaction.followup.send(
                 "❌ Lyrics not found.",
                 ephemeral=True,
@@ -459,13 +516,7 @@ class Music(commands.Cog):
             or data.get("syncedLyrics")
         )
 
-        print(
-            "8 - Lyrics length:",
-            len(lyrics) if lyrics else 0,
-        )
-
         if not lyrics:
-            print("9 - Empty lyrics")
             await interaction.followup.send(
                 "❌ Lyrics not found.",
                 ephemeral=True,
@@ -480,10 +531,6 @@ class Music(commands.Cog):
                 4000,
             )
         ]
-
-        print(
-            f"10 - Split into {len(chunks)} chunk(s)"
-        )
 
         embeds = []
 
@@ -509,13 +556,9 @@ class Music(commands.Cog):
 
             embeds.append(embed)
 
-        print("11 - Sending embeds")
-
         await interaction.followup.send(
             embeds=embeds
         )
-
-        print("12 - Done")
 
 async def setup(bot):
     await bot.add_cog(
