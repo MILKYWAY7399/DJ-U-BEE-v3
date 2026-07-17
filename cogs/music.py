@@ -48,6 +48,34 @@ class Music(commands.Cog):
             ephemeral=True,
         )
 
+    @lastfm.command(
+    name="logout",
+    description="Unlink your Last.fm account.",
+)
+    async def logout(
+        self,
+        interaction: discord.Interaction,
+    ):
+        username = self.lastfm_provider.get_username(
+            interaction.user.id
+        )
+
+        if username is None:
+            await interaction.response.send_message(
+                "❌ You don't have a linked Last.fm account.",
+                ephemeral=True,
+            )
+            return
+
+        self.lastfm_provider.logout(
+            interaction.user.id
+        )
+
+        await interaction.response.send_message(
+            f"✅ Unlinked **{username}**.",
+            ephemeral=True,
+        )
+
     @app_commands.command(
         name="join",
         description="Join your voice channel.",

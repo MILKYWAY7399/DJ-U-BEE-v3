@@ -130,6 +130,17 @@ class LastFMProvider:
     ):
         self.storage.remove(user_id)
 
+    def get_username(
+        self,
+        user_id: int,
+    ) -> str | None:
+        user = self.storage.get(user_id)
+
+        if user is None:
+            return None
+
+        return user["username"]
+
     def is_logged_in(
         self,
         user_id: int,
