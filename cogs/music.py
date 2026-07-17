@@ -634,6 +634,80 @@ class Music(commands.Cog):
             embed=embed
         )
 
+    async def playlist_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        playlists = self.playlists.list_playlists(
+            interaction.user.id
+        )
+
+        return [
+            app_commands.Choice(
+                name=name,
+                value=name,
+            )
+            for name in playlists
+            if current.lower() in name.lower()
+        ][:25]
+    
+    @playlist.command(
+    name="play",
+    description="Play one of your saved playlists.",
+)
+    @app_commands.describe(
+        name="Playlist name"
+    )
+    @app_commands.autocomplete(
+        name=playlist_autocomplete
+    )
+    async def playlist_play(
+        self,
+        interaction: discord.Interaction,
+        name: str,
+    ):
+        songs = self.playlists.get_playlist(
+            interaction.user.id,
+            name,
+        )
+
+        if songs is None:
+            await interaction.response.send_message(
+                "❌ Playlist not found.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer()
+
+        await self.music.join(
+            interaction
+        )
+
+        added = 0
+
+        for entry in songs:
+            try:
+                song = await self.lavalink.search(
+                    f"{entry['title']} {entry['artist']}",
+                    interaction.user.id,
+                )
+
+                await self.music.play(
+                    interaction,
+                    song,
+                )
+
+                added += 1
+
+            except Exception:
+                continue
+
+        await interaction.followup.send(
+            f"📀 Added **{added}** songs from **{name}**."
+        )
+
 
     @app_commands.command(
     name="lyrics",
