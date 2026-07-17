@@ -90,6 +90,50 @@ class LastFMProvider:
                 return data["session"]
             
 
+    async def update_now_playing(
+        self,
+        user_id: int,
+        artist: str,
+        track: str,
+    ):
+        user = self.storage.get(user_id)
+
+        if user is None:
+            return
+
+        session_key = user["session_key"]
+
+        api_sig = hashlib.md5(
+            (
+                f"api_key{self.api_key}"
+                f"artist{artist}"
+                f"methodtrack.updateNowPlaying"
+                f"sk{session_key}"
+                f"track{track}"
+                f"{self.shared_secret}"
+            ).encode("utf-8")
+        ).hexdigest()
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://ws.audioscrobbler.com/2.0/",
+                data={
+                    "method": "track.updateNowPlaying",
+                    "artist": artist,
+                    "track": track,
+                    "api_key": self.api_key,
+                    "sk": session_key,
+                    "api_sig": api_sig,
+                    "format": "json",
+                },
+            ) as response:
+
+                if response.status != 200:
+                    print(
+                        "Last.fm Now Playing failed:",
+                        await response.text(),
+                    )
+
     async def create_login(
         self,
         user_id: int,

@@ -155,6 +155,16 @@ class MusicManager:
             song.track
         )
 
+        await self.bot.lastfm.update_now_playing(
+            user_id=song.requester_id,
+            artist=song.artist,
+            track=song.title,
+        )
+
+        await self.update_player(
+            interaction.guild.id
+        )
+
         await self.update_player(
             interaction.guild.id
         )
