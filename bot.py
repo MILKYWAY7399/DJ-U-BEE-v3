@@ -13,6 +13,7 @@ from music.manager import MusicManager
 from providers.lavalink import LavalinkProvider
 from providers.spotify import SpotifyProvider
 from providers.lastfm import LastFMProvider
+from providers.lyrics import LyricsProvider
 
 class DJUBEE(commands.Bot):
     def __init__(self):
@@ -24,13 +25,10 @@ class DJUBEE(commands.Bot):
         )
 
         self.music = MusicManager(self)
-
         self.lavalink = LavalinkProvider()
-
         self.spotify = SpotifyProvider()
-
         self.lastfm = LastFMProvider()
-
+        self.lyrics = LyricsProvider()
     async def setup_hook(self):
         node = wavelink.Node(
             identifier="main",

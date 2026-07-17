@@ -200,6 +200,7 @@ class Music(commands.Cog):
     @app_commands.describe(
         query="Song name or URL"
     )
+    
     async def play(
         self,
         interaction: discord.Interaction,
@@ -391,6 +392,130 @@ class Music(commands.Cog):
         await interaction.followup.send(
             embed=embed
         )
+
+
+    @app_commands.command(
+    name="lyrics",
+    description="Show lyrics for the current song.",
+)
+    async def lyrics(
+        self,
+        interaction: discord.Interaction,
+    ):
+        print("1 - Command received")
+
+        await interaction.response.defer()
+
+        print("2 - Deferred")
+
+        state = self.music.get_state(
+            interaction.guild.id
+        )
+
+        print("3 - Got state")
+
+        if state.current is None:
+            print("4 - No current song")
+            await interaction.followup.send(
+                "❌ Nothing is currently playing.",
+                ephemeral=True,
+            )
+            return
+
+        print(
+            f"5 - Searching lyrics for: {state.current.artist} - {state.current.title}"
+        )
+
+        try:
+            data = await self.bot.lyrics.search(
+                state.current.artist,
+                state.current.title,
+            )
+
+            print("6 - API returned:", data)
+
+        except Exception as e:
+            import traceback
+
+            print("=== LYRICS ERROR ===")
+            traceback.print_exc()
+
+            await interaction.followup.send(
+                f"❌ Exception:\n```{e}```",
+                ephemeral=True,
+            )
+            return
+
+        if data is None:
+            print("7 - No lyrics found")
+            await interaction.followup.send(
+                "❌ Lyrics not found.",
+                ephemeral=True,
+            )
+            return
+
+        lyrics = (
+            data.get("plainLyrics")
+            or data.get("syncedLyrics")
+        )
+
+        print(
+            "8 - Lyrics length:",
+            len(lyrics) if lyrics else 0,
+        )
+
+        if not lyrics:
+            print("9 - Empty lyrics")
+            await interaction.followup.send(
+                "❌ Lyrics not found.",
+                ephemeral=True,
+            )
+            return
+
+        chunks = [
+            lyrics[i:i + 4000]
+            for i in range(
+                0,
+                len(lyrics),
+                4000,
+            )
+        ]
+
+        print(
+            f"10 - Split into {len(chunks)} chunk(s)"
+        )
+
+        embeds = []
+
+        for index, chunk in enumerate(chunks):
+            embed = discord.Embed(
+                title=(
+                    f"🎤 {state.current.title}"
+                    if index == 0
+                    else None
+                ),
+                description=chunk,
+                color=0x5865F2,
+            )
+
+            if index == 0:
+                embed.set_author(
+                    name=state.current.artist
+                )
+
+            embed.set_footer(
+                text=f"Page {index + 1}/{len(chunks)}"
+            )
+
+            embeds.append(embed)
+
+        print("11 - Sending embeds")
+
+        await interaction.followup.send(
+            embeds=embeds
+        )
+
+        print("12 - Done")
 
 async def setup(bot):
     await bot.add_cog(
