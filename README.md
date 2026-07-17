@@ -89,7 +89,7 @@ DJ-U-BEE-v3/
 ### Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/DJ-U-BEE-v3.git
+git clone https://github.com/MILKYWAY7399/DJ-U-BEE-v3.git
 cd DJ-U-BEE-v3
 ```
 
