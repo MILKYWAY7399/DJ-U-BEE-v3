@@ -708,6 +708,80 @@ class Music(commands.Cog):
             f"📀 Added **{added}** songs from **{name}**."
         )
 
+    @playlist.command(
+        name="list",
+        description="View your saved playlists.",
+    )
+    async def playlist_list(
+        self,
+        interaction: discord.Interaction,
+    ):
+        playlists = self.playlists.list_playlists(
+            interaction.user.id
+        )
+
+        if not playlists:
+            await interaction.response.send_message(
+                "📂 You don't have any saved playlists.",
+                ephemeral=True,
+            )
+            return
+
+        embed = discord.Embed(
+            title="📀 Your Playlists",
+            color=discord.Color.blurple(),
+        )
+
+        for name in playlists:
+            songs = self.playlists.get_playlist(
+                interaction.user.id,
+                name,
+            )
+
+            embed.add_field(
+                name=name,
+                value=f"🎵 {len(songs)} songs",
+                inline=False,
+            )
+
+        embed.set_footer(
+            text=f"{len(playlists)} playlist(s)"
+        )
+
+        await interaction.response.send_message(
+            embed=embed
+        )
+
+    @playlist.command(
+        name="delete",
+        description="Delete one of your saved playlists.",
+    )
+    @app_commands.describe(
+        name="Playlist name",
+    )
+    @app_commands.autocomplete(
+        name=playlist_autocomplete,
+    )
+    async def playlist_delete(
+        self,
+        interaction: discord.Interaction,
+        name: str,
+    ):
+        success = self.playlists.delete_playlist(
+            interaction.user.id,
+            name,
+        )
+
+        if not success:
+            await interaction.response.send_message(
+                "❌ Playlist not found.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            f"🗑️ Deleted **{name}**.",
+        )
 
     @app_commands.command(
     name="lyrics",
