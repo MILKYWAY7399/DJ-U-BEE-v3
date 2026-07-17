@@ -1,7 +1,8 @@
 import discord
 
 from music.loop_mode import LoopMode
-
+from ui.queue_embed import build_queue_embed
+from ui.queue_view import QueueView
 
 class PreviousButton(discord.ui.Button):
     def __init__(self):
@@ -141,47 +142,27 @@ class QueueButton(discord.ui.Button):
         self,
         interaction: discord.Interaction,
     ):
-        current, queue = (
-            interaction.client.music.get_queue(
-                interaction.guild.id
-            )
+        state = interaction.client.music.get_state(
+            interaction.guild.id
         )
 
-        if current is None:
+        if state.current is None:
             await interaction.response.send_message(
                 "📜 Queue is empty.",
                 ephemeral=True,
             )
             return
 
-        description = (
-            f"▶ **Now Playing**\n"
-            f"{current.title}"
-        )
-
-        if queue:
-            description += "\n\n**Up Next**\n"
-
-            for i, song in enumerate(
-                queue,
-                start=1,
-            ):
-                description += (
-                    f"{i}. {song.title}\n"
-                )
-
-        embed = discord.Embed(
-            title="📜 Queue",
-            description=description,
-            color=0x5865F2,
-        )
-
-        embed.set_footer(
-            text=f"{len(queue)} song(s) queued"
-        )
-
         await interaction.response.send_message(
-            embed=embed,
+            embed=build_queue_embed(
+                interaction.client,
+                state,
+                0,
+            ),
+            view=QueueView(
+                interaction.client,
+                state,
+            ),
             ephemeral=True,
         )
 
