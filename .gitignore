@@ -7,5 +7,5 @@ __pycache__/
 lavalink/Lavalink.jar
 lavalink/plugins/
 
-storage/
+storage/*
 !storage/.gitkeep
