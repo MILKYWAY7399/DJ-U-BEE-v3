@@ -7,6 +7,7 @@ import uuid
 from ui.search_view import SearchView
 from ui.lastfm_login_view import LastFMLoginView
 from models.song import Song
+from ui.playlist_save_modal import PlaylistSaveModal
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -17,12 +18,12 @@ class Music(commands.Cog):
         self.spotify = bot.spotify
         self.lastfm_provider = bot.lastfm
         self.autocomplete_cache: dict[str, Song] = {}
+        self.playlists = bot.playlists
 
     lastfm = app_commands.Group(
         name="lastfm",
         description="Manage your Last.fm account.",
     )
-
     @lastfm.command(
         name="login",
         description="Link your Last.fm account.",
@@ -149,6 +150,25 @@ class Music(commands.Cog):
         await interaction.response.send_message(
             embed=embed
         )
+
+
+    playlist = app_commands.Group(
+        name="playlist",
+        description="Manage your saved playlists.",
+    )
+
+    @playlist.command(
+        name="save",
+        description="Save a custom playlist.",
+    )
+    async def playlist_save(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.send_modal(
+            PlaylistSaveModal(self)
+        )
+
 
     @app_commands.command(
         name="join",
@@ -537,14 +557,14 @@ class Music(commands.Cog):
                 )
 
 
-    @app_commands.command(
-        name="playlist",
+    @playlist.command(
+        name="import",
         description="Import Spotify playlist from pasted track links.",
     )
     @app_commands.describe(
         tracks="Paste Spotify track links (one per line)"
     )
-    async def playlist(
+    async def playlist_import(
         self,
         interaction: discord.Interaction,
         tracks: str,
