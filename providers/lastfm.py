@@ -182,6 +182,58 @@ class LastFMProvider:
                         await response.text(),
                     )
 
+    async def get_profile(
+        self,
+        user_id: int,
+    ):
+        user = self.storage.get(user_id)
+
+        if user is None:
+            return None
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://ws.audioscrobbler.com/2.0/",
+                params={
+                    "method": "user.getInfo",
+                    "user": user["username"],
+                    "api_key": self.api_key,
+                    "format": "json",
+                },
+            ) as response:
+                data = await response.json()
+
+        return data["user"]
+
+    async def get_recent_track(
+        self,
+        user_id: int,
+    ):
+        user = self.storage.get(user_id)
+
+        if user is None:
+            return None
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://ws.audioscrobbler.com/2.0/",
+                params={
+                    "method": "user.getRecentTracks",
+                    "user": user["username"],
+                    "limit": 1,
+                    "api_key": self.api_key,
+                    "format": "json",
+                },
+            ) as response:
+                data = await response.json()
+
+        tracks = data["recenttracks"]["track"]
+
+        if not tracks:
+            return None
+
+        return tracks[0]
+
     async def create_login(
         self,
         user_id: int,

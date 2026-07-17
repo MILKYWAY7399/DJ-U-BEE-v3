@@ -76,6 +76,77 @@ class Music(commands.Cog):
             ephemeral=True,
         )
 
+    @lastfm.command(
+        name="profile",
+        description="View your linked Last.fm profile.",
+    )
+    async def lastfm_profile(
+        self,
+        interaction: discord.Interaction,
+    ):
+        profile = await self.lastfm_provider.get_profile(
+            interaction.user.id
+        )
+        recent = await self.lastfm_provider.get_recent_track(
+            interaction.user.id
+        )
+
+        if profile is None:
+            await interaction.response.send_message(
+                "❌ You haven't linked your Last.fm account.",
+                ephemeral=True,
+            )
+            return
+
+        embed = discord.Embed(
+            title=f"{profile['name']}'s Last.fm Profile",
+            url=profile["url"],
+            color=0xD51007,
+        )
+
+        images = profile.get("image", [])
+
+        if images:
+            image = images[-1].get("#text")
+
+            if image:
+                embed.set_thumbnail(
+                    url=image
+                )
+
+        embed.add_field(
+            name="Scrobbles",
+            value=profile["playcount"],
+            inline=True,
+        )
+
+        embed.add_field(
+            name="Country",
+            value=profile["country"] if profile["country"] else "Unknown",
+            inline=True,
+        )
+
+        embed.add_field(
+            name="Registered",
+            value=f"<t:{profile['registered']['unixtime']}:D>",
+            inline=True,
+        )
+
+        if recent and recent.get("@attr", {}).get("nowplaying") == "true":
+            embed.add_field(
+                name="Now Playing",
+                value=f"🎵 **{recent['name']}**\nby **{recent['artist']['#text']}**",
+                inline=False,
+            )
+
+        embed.set_footer(
+            text="Powered by Last.fm"
+        )
+
+        await interaction.response.send_message(
+            embed=embed
+        )
+
     @app_commands.command(
         name="join",
         description="Join your voice channel.",
