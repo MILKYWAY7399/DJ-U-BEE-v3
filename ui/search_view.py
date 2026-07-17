@@ -7,8 +7,10 @@ class SongSelect(discord.ui.Select):
     def __init__(
         self,
         songs: list[Song],
+        play_next: bool = False,
     ):
         self.songs = songs
+        self.play_next = play_next
 
         options = []
 
@@ -36,10 +38,16 @@ class SongSelect(discord.ui.Select):
             int(self.values[0])
         ]
 
-        await interaction.client.music.play(
-            interaction,
-            song,
-        )
+        if self.play_next:
+            await interaction.client.music.playnext(
+                interaction,
+                song,
+            )
+        else:
+            await interaction.client.music.play(
+                interaction,
+                song,
+            )
 
         await interaction.response.edit_message(
             content=f"🎵 **{song.title}** selected.",
@@ -52,11 +60,15 @@ class SearchView(discord.ui.View):
     def __init__(
         self,
         songs: list[Song],
+        play_next: bool = False,
     ):
         super().__init__(
             timeout=60
         )
 
         self.add_item(
-            SongSelect(songs)
+            SongSelect(
+                songs,
+                play_next,
+            )
         )

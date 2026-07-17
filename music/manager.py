@@ -179,6 +179,42 @@ class MusicManager:
 
         return True
 
+    #This method is for /playnext command
+    async def playnext(
+        self,
+        interaction: discord.Interaction,
+        song: Song,
+    ):
+        state = self.get_state(
+            interaction.guild.id
+        )
+
+        state.text_channel = interaction.channel
+
+        player = state.player
+
+        if player is None:
+            player = await self.join(
+                interaction
+            )
+
+        if player.playing:
+            state.queue.insert(
+                0,
+                song,
+            )
+
+            await self.update_player(
+                interaction.guild.id
+            )
+
+            return False
+
+        return await self.play(
+            interaction,
+            song,
+        )
+
     async def schedule_scrobble(
         self,
         guild_id: int,
@@ -204,6 +240,7 @@ class MusicManager:
         except asyncio.CancelledError:
             pass
 
+    #While this method is for the next button
     async def play_next(
         self,
         player: wavelink.Player,

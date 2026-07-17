@@ -385,6 +385,157 @@ class Music(commands.Cog):
                     ephemeral=True,
                 )
 
+    @app_commands.command(
+        name="playnext",
+        description="Play a song next.",
+    )
+    @app_commands.describe(
+        query="Song name or URL"
+    )
+    @app_commands.autocomplete(
+        query=play_autocomplete
+    )
+    async def playnext(
+        self,
+        interaction: discord.Interaction,
+        query: str,
+    ):
+        try:
+
+            if query in self.autocomplete_cache:
+                song = self.autocomplete_cache.pop(query)
+
+                played = await self.music.playnext(
+                    interaction,
+                    song,
+                )
+
+                if played:
+                    await interaction.response.send_message(
+                        f"▶️ Now playing **{song.title}**",
+                        ephemeral=True,
+                    )
+                else:
+                    await interaction.response.send_message(
+                        f"➕ Added **{song.title}** to the queue.",
+                        ephemeral=True,
+                    )
+
+                return
+
+            # Spotify track
+            if "open.spotify.com/track/" in query:
+                title, artist = (
+                    await self.spotify.get_track(
+                        query
+                    )
+                )
+
+                query = (
+                    f"{title} {artist}"
+                )
+
+                songs = await self.lavalink.search_many(
+                    query,
+                    interaction.user.id,
+                )
+
+                embed = discord.Embed(
+                    title="🔍 Search Results",
+                    description="Choose the song you want to play.",
+                    color=0x5865F2,
+                )
+
+                await interaction.response.send_message(
+                    embed=embed,
+                    view=SearchView(
+                        songs,
+                        play_next=True
+                    ),
+                    ephemeral=True,
+                )
+
+                return
+
+            # Spotify Album
+            if "open.spotify.com/album/" in query:
+
+                await interaction.response.defer()
+
+                tracks = await self.spotify.get_album(
+                    query
+                )
+
+                await self.music.join(
+                    interaction
+                )
+
+                added = 0
+
+                for title, artist in tracks:
+
+                    print(
+                        f"Searching: {title} - {artist}"
+                    )
+
+                    try:
+                        song = await self.lavalink.search(
+                            f"{title} {artist}",
+                            interaction.user.id,
+                        )
+
+                        await self.music.playnext(
+                            interaction,
+                            song,
+                        )
+
+                        added += 1
+
+                    except Exception as e:
+                        print(
+                            f"Skipped: {title} - {artist}"
+                        )
+                        print(e)
+
+                await interaction.followup.send(
+                    f"💿 Added **{added}** songs to the queue."
+                )
+
+                return
+
+            # Normal search
+            songs = await self.lavalink.search_many(
+                query,
+                interaction.user.id,
+            )
+
+            embed = discord.Embed(
+                title="🔍 Search Results",
+                description="Choose the song you want to play.",
+                color=0x5865F2,
+            )
+
+            await interaction.response.send_message(
+                embed=embed,
+                view=SearchView(
+                    songs,
+                    play_next=True
+                ),
+                ephemeral=True,
+            )
+
+        except RuntimeError as e:
+            if interaction.response.is_done():
+                await interaction.followup.send(
+                    f"❌ {e}",
+                    ephemeral=True,
+                )
+            else:
+                await interaction.response.send_message(
+                    f"❌ {e}",
+                    ephemeral=True,
+                )
+
 
     @app_commands.command(
         name="playlist",
