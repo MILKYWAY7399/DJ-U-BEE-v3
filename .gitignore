@@ -1,11 +1,22 @@
 .venv/
+
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+
 .env
+
 .vscode/
+.idea/
+
+storage/*
+!storage/.gitkeep
 
 lavalink/Lavalink.jar
 lavalink/plugins/
 
-storage/*
-!storage/.gitkeep
+*.log
+logs/
+
+.DS_Store
+Thumbs.db

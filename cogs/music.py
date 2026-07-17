@@ -74,7 +74,7 @@ class Music(commands.Cog):
     ):
         try:
 
-            # ---------- Spotify Track ----------
+            # Spotiy track
             if "open.spotify.com/track/" in query:
                 title, artist = (
                     await self.spotify.get_track(
@@ -105,7 +105,7 @@ class Music(commands.Cog):
 
                 return
 
-            # ---------- Spotify Album ----------
+            # Spotify Album
             if "open.spotify.com/album/" in query:
 
                 await interaction.response.defer()
@@ -151,8 +151,7 @@ class Music(commands.Cog):
 
                 return
 
-            # ---------- Normal Search ----------
-
+            # Normal search
             songs = await self.lavalink.search_many(
                 query,
                 interaction.user.id,
