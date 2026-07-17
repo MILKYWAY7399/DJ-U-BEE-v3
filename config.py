@@ -23,6 +23,14 @@ SPOTIFY_CLIENT_SECRET = os.getenv(
     "SPOTIFY_CLIENT_SECRET"
 )
 
+LASTFM_API_KEY = os.getenv(
+    "LASTFM_API_KEY"
+)
+
+LASTFM_SHARED_SECRET = os.getenv(
+    "LASTFM_SHARED_SECRET"
+)
+
 if not DISCORD_TOKEN:
     raise RuntimeError(
         "DISCORD_TOKEN not found."
@@ -36,4 +44,14 @@ if not SPOTIFY_CLIENT_ID:
 if not SPOTIFY_CLIENT_SECRET:
     raise RuntimeError(
         "SPOTIFY_CLIENT_SECRET not found."
+    )
+
+if not LASTFM_API_KEY:
+    raise RuntimeError(
+        "LASTFM_API_KEY not found"
+    )
+
+if not LASTFM_SHARED_SECRET:
+    raise RuntimeError(
+        "LASTFM_SHARED_SECRET not found"
     )

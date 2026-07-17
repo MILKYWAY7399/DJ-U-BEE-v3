@@ -4,7 +4,7 @@ from discord.ext import commands
 import re
 
 from ui.search_view import SearchView
-
+from ui.lastfm_login_view import LastFMLoginView
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -13,6 +13,40 @@ class Music(commands.Cog):
         self.music = bot.music
         self.lavalink = bot.lavalink
         self.spotify = bot.spotify
+        self.lastfm_provider = bot.lastfm
+
+    lastfm = app_commands.Group(
+        name="lastfm",
+        description="Manage your Last.fm account.",
+    )
+
+    @lastfm.command(
+        name="login",
+        description="Link your Last.fm account.",
+    )
+    async def login(
+        self,
+        interaction: discord.Interaction,
+    ):
+        if self.lastfm_provider.is_logged_in(interaction.user.id):
+            await interaction.response.send_message(
+                "❌ Your Last.fm account is already linked.",
+                ephemeral=True,
+            )
+            return
+
+        url = await self.lastfm_provider.create_login(
+            interaction.user.id
+        )
+
+        await interaction.response.send_message(
+            "Click **Authorize Last.fm**, approve access in your browser, then come back and press **I've Authorized**.",
+            view=LastFMLoginView(
+                self.lastfm_provider,
+                url,
+            ),
+            ephemeral=True,
+        )
 
     @app_commands.command(
         name="join",

@@ -1,7 +1,7 @@
 from aiohttp import web
 
 
-class SpotifyCallbackServer:
+class CallbackServer:
     def __init__(self):
         self.code = None
         self.state = None
@@ -31,7 +31,7 @@ class SpotifyCallbackServer:
         await site.start()
 
         print(
-            "✅ Spotify OAuth server started."
+            "✅ OAuth server started."
         )
 
     async def stop(
@@ -53,7 +53,6 @@ class SpotifyCallbackServer:
 
         return web.Response(
             text=(
-                "✅ Spotify connected successfully.\n"
                 "You may now close this window."
             )
         )
