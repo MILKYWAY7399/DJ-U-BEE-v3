@@ -134,6 +134,54 @@ class LastFMProvider:
                         await response.text(),
                     )
 
+
+    async def scrobble(
+        self,
+        user_id: int,
+        artist: str,
+        track: str,
+        timestamp: int,
+    ):
+        user = self.storage.get(user_id)
+
+        if user is None:
+            return
+
+        session_key = user["session_key"]
+
+        api_sig = hashlib.md5(
+            (
+                f"api_key{self.api_key}"
+                f"artist{artist}"
+                f"methodtrack.scrobble"
+                f"sk{session_key}"
+                f"timestamp{timestamp}"
+                f"track{track}"
+                f"{self.shared_secret}"
+            ).encode("utf-8")
+        ).hexdigest()
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://ws.audioscrobbler.com/2.0/",
+                data={
+                    "method": "track.scrobble",
+                    "artist": artist,
+                    "track": track,
+                    "timestamp": timestamp,
+                    "api_key": self.api_key,
+                    "sk": session_key,
+                    "api_sig": api_sig,
+                    "format": "json",
+                },
+            ) as response:
+
+                if response.status != 200:
+                    print(
+                        "Last.fm Scrobble failed:",
+                        await response.text(),
+                    )
+
     async def create_login(
         self,
         user_id: int,

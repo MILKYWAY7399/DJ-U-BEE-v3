@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 import discord
 import wavelink
+import asyncio
 
 from models.song import Song
 from music.loop_mode import LoopMode
@@ -26,3 +27,5 @@ class GuildState:
     text_channel: discord.TextChannel | None = None
 
     player_message: discord.Message | None = None
+
+    scrobble_task: asyncio.Task | None = None

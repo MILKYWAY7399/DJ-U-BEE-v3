@@ -3,6 +3,8 @@ from collections import defaultdict
 import discord
 import wavelink
 import random
+import asyncio
+import time
 
 from models.song import Song
 from music.guild_state import GuildState
@@ -161,8 +163,14 @@ class MusicManager:
             track=song.title,
         )
 
-        await self.update_player(
-            interaction.guild.id
+        if state.scrobble_task is not None:
+            state.scrobble_task.cancel()
+
+        state.scrobble_task = asyncio.create_task(
+            self.schedule_scrobble(
+                interaction.guild.id,
+                song,
+            )
         )
 
         await self.update_player(
@@ -170,6 +178,31 @@ class MusicManager:
         )
 
         return True
+
+    async def schedule_scrobble(
+        self,
+        guild_id: int,
+        song: Song,
+    ):
+        state = self.get_state(guild_id)
+
+        wait_time = min(
+            song.duration / 2000,
+            240,
+        )
+
+        try:
+            await asyncio.sleep(wait_time)
+
+            await self.bot.lastfm.scrobble(
+                user_id=song.requester_id,
+                artist=song.artist,
+                track=song.title,
+                timestamp=int(time.time() - wait_time),
+            )
+
+        except asyncio.CancelledError:
+            pass
 
     async def play_next(
         self,
@@ -211,6 +244,22 @@ class MusicManager:
             next_song.track
         )
 
+        await self.bot.lastfm.update_now_playing(
+            user_id=next_song.requester_id,
+            artist=next_song.artist,
+            track=next_song.title,
+        )
+
+        if state.scrobble_task is not None:
+            state.scrobble_task.cancel()
+
+        state.scrobble_task = asyncio.create_task(
+            self.schedule_scrobble(
+                player.guild.id,
+                next_song,
+            )
+        )
+
         await self.update_player(
             player.guild.id
         )
@@ -230,6 +279,9 @@ class MusicManager:
             or not player.playing
         ):
             return False
+
+        if state.scrobble_task is not None:
+            state.scrobble_task.cancel()
 
         await player.skip()
 
