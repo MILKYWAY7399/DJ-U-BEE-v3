@@ -237,7 +237,7 @@ class MusicManager:
         guild_id: int,
         song: Song,
     ):
-        state = self.get_state(guild_id)
+        print("schedule_scrobble started")
 
         wait_time = min(
             song.duration / 2000,
@@ -245,7 +245,12 @@ class MusicManager:
         )
 
         try:
+            state = self.get_state(guild_id)
+            print(f"Waiting {wait_time} seconds")
+
             await asyncio.sleep(wait_time)
+
+            print("Sleep finished")
 
             await self.bot.lastfm.scrobble(
                 user_id=song.requester_id,
@@ -254,8 +259,34 @@ class MusicManager:
                 timestamp=int(time.time() - wait_time),
             )
 
-        except asyncio.CancelledError:
-            pass
+            print("Last.fm scrobbled")
+
+            player = state.player
+
+            print(player)
+
+            if player:
+                print("Player exists")
+
+            if player and player.channel:
+                print("Channel exists")
+
+                for member in player.channel.members:
+                    print(member)
+
+                    if member.bot:
+                        continue
+
+                    self.bot.stats.record_play(
+                        guild_id,
+                        member.id,
+                        song,
+                    )
+
+            print("Done")
+
+        except Exception as e:
+            print("SCROBBLE ERROR:", repr(e))
 
     #While this method is for the next button
     async def play_next(

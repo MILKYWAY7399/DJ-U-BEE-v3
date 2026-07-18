@@ -17,6 +17,7 @@ from providers.lyrics import LyricsProvider
 from providers.playlist_provider import PlaylistProvider
 from providers.radio_provider import RadioProvider
 from providers.settings_provider import SettingsProvider
+from providers.stats_provider import StatsProvider
 
 class DJUBEE(commands.Bot):
     def __init__(self):
@@ -35,6 +36,7 @@ class DJUBEE(commands.Bot):
         self.playlists = PlaylistProvider()
         self.radio = RadioProvider(self.lavalink)
         self.settings = SettingsProvider()
+        self.stats = StatsProvider()
 
     async def setup_hook(self):
         node = wavelink.Node(
