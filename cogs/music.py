@@ -8,6 +8,7 @@ from ui.search_view import SearchView
 from ui.lastfm_login_view import LastFMLoginView
 from models.song import Song
 from ui.playlist_save_modal import PlaylistSaveModal
+from ui.playlist_save_queue_modal import PlaylistSaveQueueModal
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -781,6 +782,28 @@ class Music(commands.Cog):
 
         await interaction.response.send_message(
             f"🗑️ Deleted **{name}**.",
+        )
+
+    @playlist.command(
+        name="savequeue",
+        description="Save your current music queue as a playlist.",
+    )
+    async def playlist_save_queue(
+        self,
+        interaction: discord.Interaction,
+    ):
+        state = self.music.get_state(
+            interaction.guild.id
+        )
+        if not state.queue:
+            await interaction.response.send_message(
+                "❌ Your queue is empty.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_modal(
+            PlaylistSaveQueueModal(self)
         )
 
     @app_commands.command(
