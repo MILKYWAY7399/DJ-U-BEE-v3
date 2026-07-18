@@ -902,6 +902,33 @@ class Music(commands.Cog):
             embeds=embeds
         )
 
+
+    @app_commands.command(
+        name="radio",
+        description="Toggle Radio Mode.",
+    )
+    async def radio(
+        self,
+        interaction: discord.Interaction,
+    ):
+        state = self.music.get_state(
+            interaction.guild.id
+        )
+
+        state.radio = not state.radio
+        self.bot.settings.set_radio(
+            interaction.guild.id,
+            state.radio,
+        )
+
+        await interaction.response.send_message(
+            (
+                "📻 **Radio Mode Enabled**"
+                if state.radio
+                else "📻 **Radio Mode Disabled**"
+            ),
+            ephemeral=True,
+        )
 async def setup(bot):
     await bot.add_cog(
         Music(bot)

@@ -29,3 +29,7 @@ class GuildState:
     player_message: discord.Message | None = None
 
     scrobble_task: asyncio.Task | None = None
+
+    radio: bool = False
+
+    settings_loaded: bool = False

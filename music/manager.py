@@ -37,7 +37,15 @@ class MusicManager:
         self,
         guild_id: int,
     ) -> GuildState:
-        return self.guilds[guild_id]
+        state = self.guilds[guild_id]
+
+        if not state.settings_loaded:
+            state.radio = self.bot.settings.get_radio(
+                guild_id
+            )
+            state.settings_loaded = True
+
+        return state
 
     async def update_player(
         self,
@@ -267,11 +275,24 @@ class MusicManager:
             )
 
         if not state.queue:
-            state.current = None
-            await self.update_player(
-                player.guild.id
-            )
-            return
+
+            if state.radio and state.current is not None:
+
+                song = await self.bot.radio.recommend(
+                    state.current
+                )
+
+                if song is not None:
+                    state.queue.append(song)
+
+            if not state.queue:
+                state.current = None
+
+                await self.update_player(
+                    player.guild.id
+                )
+
+                return
 
         next_song = state.queue.pop(0)
 
