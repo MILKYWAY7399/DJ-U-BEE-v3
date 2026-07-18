@@ -97,3 +97,27 @@ class StatsProvider:
         )
 
         self.save()
+
+    def get_user_stats(
+        self,
+        guild_id: int,
+        user_id: int,
+    ):
+        guild = self.data["guilds"].get(str(guild_id))
+
+        if guild is None:
+            return None
+
+        return guild["users"].get(str(user_id))
+
+
+    def format_time(
+        self,
+        milliseconds: int,
+    ):
+        seconds = milliseconds // 1000
+
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+
+        return f"{hours}h {minutes}m"
