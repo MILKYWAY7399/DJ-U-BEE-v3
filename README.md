@@ -1,70 +1,80 @@
-# 🐝 DJ-U-BEE-v3
+# 🐝 DJ U BEE v3
 
-A modern Discord music bot built with **discord.py**, **Wavelink**, and **Lavalink**.
+> A modern Discord music bot built with **discord.py**, **Wavelink**, and **Lavalink**.
 
-DJ-U-BEE-v3 is a complete rewrite of my original Discord music bot, focusing on clean architecture, modular design, and a polished user experience.
+DJ U BEE v3 is a complete rewrite of my original Discord music bot, focused on clean architecture, modular design, and an intuitive user experience.
 
 ---
 
 ## ✨ Features
 
 ### 🎵 Music Playback
-- Play songs from YouTube
-- Instant autocomplete search
+- YouTube playback
 - Spotify track support
 - Spotify album support
-- Import Spotify playlists from pasted track links
-- `/playnext` support
+- Spotify playlist import
+- Instant autocomplete search
+- `/play`
+- `/playnext`
 - Automatic queue management
+- Radio Mode (automatic recommendations)
 
-### 🎛 Player Controls
+### 🎛️ Interactive Player
 - Previous
 - Pause / Resume
 - Skip
-- Shuffle
 - Stop
-- Loop modes (Off / Track / Queue)
+- Shuffle
+- Seek controls (±5s / ±10s / ±30s)
+- Loop (Off / Track / Queue)
+- Live progress bar
 - Persistent player controls
 
 ### 📋 Queue Management
 - Interactive queue viewer
-- Paginated queue navigation
-- Queue button integrated into the player
-- Remaining queue duration
-- Album artwork previews
-- Automatic queue progression
-- Search result selection menu
+- Pagination
+- Queue duration
+- Album artwork
+- Search selection menu
+- Queue button integration
 
 ### 🎧 Spotify Integration
-- Spotify OAuth
-- Track metadata lookup
-- Album metadata lookup
-- Automatic YouTube matching for playback
+- OAuth authentication
+- Track lookup
+- Album lookup
+- Playlist import
+- Automatic YouTube matching
 
 ### 🎼 Last.fm Integration
-- OAuth login
-- Logout
+- OAuth login/logout
 - User profile lookup
 - Now Playing updates
 - Automatic scrobbling
 
 ### 🎤 Lyrics
-- Fetch lyrics for the currently playing song
-- Multi-page lyric embeds for long songs
+- Lyrics for the current song
+- Multi-page lyric embeds
+
+### 📊 Listening Statistics
+- Per-user listening statistics
+- Songs played
+- Listening time
+- Top artists
+- Top songs
+- Server-wide tracking
 
 ---
 
 ## 🚧 Planned Features
 
-- Custom user playlists
+- Server leaderboards
+- Server statistics
+- Monthly listening history
+- Listening streaks
 - Playlist sharing
-- Save current queue as playlist
-- Listening statistics
-- User profiles
-- Top artists
-- Top tracks
-- Guild listening statistics
-- Queue management commands (`/remove`, `/move`, `/jump`)
+- Save queue as playlist
+- Queue management (`/remove`, `/move`, `/jump`)
+- Dashboard
 
 ---
 
@@ -92,7 +102,7 @@ DJ-U-BEE-v3/
 
 ---
 
-## ⚙ Requirements
+## ⚙️ Requirements
 
 - Python 3.11+
 - Java 17+
@@ -118,13 +128,13 @@ cd DJ-U-BEE-v3
 python -m venv .venv
 ```
 
-**Windows**
+Windows
 
 ```bash
 .venv\Scripts\activate
 ```
 
-**Linux / macOS**
+Linux/macOS
 
 ```bash
 source .venv/bin/activate
@@ -138,17 +148,17 @@ pip install -r requirements.txt
 
 ### Configure environment variables
 
-Create a `.env` file:
+Create a `.env` file.
 
 ```env
-DISCORD_TOKEN=your_discord_token
+DISCORD_TOKEN=
 
-SPOTIFY_CLIENT_ID=your_client_id
-SPOTIFY_CLIENT_SECRET=your_client_secret
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
 SPOTIFY_REDIRECT_URI=http://localhost:8888/callback
 
-LASTFM_API_KEY=your_lastfm_api_key
-LASTFM_SHARED_SECRET=your_lastfm_shared_secret
+LASTFM_API_KEY=
+LASTFM_SHARED_SECRET=
 
 LAVALINK_HOST=localhost
 LAVALINK_PORT=2333
@@ -157,12 +167,12 @@ LAVALINK_PASSWORD=youshallnotpass
 
 ### Start Lavalink
 
-Place the following inside the `lavalink/` folder:
+Place inside the `lavalink/` directory:
 
 - `Lavalink.jar`
 - `plugins/`
 
-Start the Lavalink server.
+Start Lavalink before launching the bot.
 
 ### Run the bot
 
@@ -172,7 +182,7 @@ python bot.py
 
 ---
 
-## 🛠 Built With
+## 🛠️ Built With
 
 - Python
 - discord.py
@@ -185,7 +195,7 @@ python bot.py
 
 ## 📜 License
 
-This project is licensed under the MIT License.
+Licensed under the MIT License.
 
 ---
 
@@ -193,4 +203,4 @@ This project is licensed under the MIT License.
 
 **MILKYWAY7399**
 
-Built as a personal project to learn software architecture, asynchronous programming, API integration, and Discord bot development.
+DJ U BEE v3 is a personal project built to explore software architecture, asynchronous programming, API integrations, and modern Discord bot development.
