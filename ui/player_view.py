@@ -3,6 +3,7 @@ import discord
 from music.loop_mode import LoopMode
 from ui.queue_embed import build_queue_embed
 from ui.queue_view import QueueView
+from ui.seek_view import SeekView
 
 class PreviousButton(discord.ui.Button):
     def __init__(self):
@@ -221,6 +222,24 @@ class StopButton(discord.ui.Button):
                 ephemeral=True,
             )
 
+class SeekButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(
+            emoji="📍",
+            style=discord.ButtonStyle.secondary,
+            row=2,
+        )
+
+    async def callback(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await interaction.response.send_message(
+            "📍 Seek Controls",
+            view=SeekView(),
+            ephemeral=True,
+        )
+
 class PlayerView(discord.ui.View):
     def __init__(
         self,
@@ -237,6 +256,7 @@ class PlayerView(discord.ui.View):
         self.add_item(QueueButton())
         self.add_item(ShuffleButton())
         self.add_item(StopButton())
+        self.add_item(SeekButton())
 
         if not enabled:
             for item in self.children:

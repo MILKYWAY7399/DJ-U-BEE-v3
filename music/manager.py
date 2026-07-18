@@ -467,6 +467,45 @@ class MusicManager:
 
         return True
 
+
+    async def seek(
+        self,
+        guild_id: int,
+        offset: int,
+    ) -> bool:
+        state = self.get_state(
+            guild_id
+        )
+
+        player = state.player
+
+        if (
+            player is None
+            or state.current is None
+        ):
+            return False
+
+        position = (
+            player.position
+            + offset
+        )
+
+        position = max(
+            0,
+            min(
+                position,
+                state.current.duration,
+            ),
+        )
+
+        await player.seek(position)
+
+        await self.update_player(
+            guild_id
+        )
+
+        return True
+
     def cycle_loop_mode(
         self,
         guild_id: int,
