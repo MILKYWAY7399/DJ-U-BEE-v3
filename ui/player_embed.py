@@ -3,6 +3,38 @@ import discord
 from music.guild_state import GuildState
 from music.loop_mode import LoopMode
 
+def format_time(ms: int) -> str:
+    total = ms // 1000
+
+    hours = total // 3600
+    minutes = (total % 3600) // 60
+    seconds = total % 60
+
+    if hours:
+        return f"{hours}:{minutes:02}:{seconds:02}"
+
+    return f"{minutes}:{seconds:02}"
+
+
+def progress_bar(
+    position: int,
+    duration: int,
+    length: int = 24,
+) -> str:
+    if duration <= 0:
+        return "─" * length
+
+    progress = min(
+        max(position / duration, 0),
+        1,
+    )
+
+    marker = round(progress * (length - 1))
+
+    return "".join(
+        "●" if i == marker else "─"
+        for i in range(length)
+    )
 
 def build_player_embed(
     bot,
@@ -25,7 +57,18 @@ def build_player_embed(
     duration = (
         f"{minutes}:{seconds:02}"
     )
+    position = (
+        state.player.position
+        if state.player
+        else 0
+    )
 
+    current_time = format_time(position)
+
+    bar = progress_bar(
+        position,
+        song.duration,
+    )
     queue_count = len(
         state.queue
     )
@@ -59,7 +102,7 @@ def build_player_embed(
             f"## {song.title}\n"
             f"**{song.artist}**\n\n"
             f"{status_text}\n"
-            f"⏱ **Duration:** {duration}\n"
+            f"⏱ `{current_time}` {bar} `{duration}`\n"
             f"👤 **Requested by:** {requester_name}\n"
             f"📜 **Queue:** {queue_count} song(s)\n"
             f"🔁 **Loop:** {loop_text}"

@@ -33,3 +33,5 @@ class GuildState:
     radio: bool = False
 
     settings_loaded: bool = False
+
+    progress_task: asyncio.Task | None = None

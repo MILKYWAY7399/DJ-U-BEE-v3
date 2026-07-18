@@ -185,6 +185,15 @@ class MusicManager:
             interaction.guild.id
         )
 
+        if state.progress_task is not None:
+            state.progress_task.cancel()
+
+        state.progress_task = asyncio.create_task(
+            self.progress_updater(
+                interaction.guild.id,   # use player.guild.id inside play_next()
+            )
+        )
+
         return True
 
     #This method is for /playnext command
@@ -288,6 +297,10 @@ class MusicManager:
             if not state.queue:
                 state.current = None
 
+                if state.progress_task is not None:
+                    state.progress_task.cancel()
+                    state.progress_task = None
+
                 await self.update_player(
                     player.guild.id
                 )
@@ -320,6 +333,15 @@ class MusicManager:
 
         await self.update_player(
             player.guild.id
+        )
+
+        if state.progress_task is not None:
+            state.progress_task.cancel()
+
+        state.progress_task = asyncio.create_task(
+            self.progress_updater(
+                player.guild.id,
+            )
         )
 
     async def skip(
@@ -505,6 +527,28 @@ class MusicManager:
         )
 
         return True
+
+    async def progress_updater(
+        self,
+        guild_id: int,
+    ):
+        try:
+            while True:
+                state = self.get_state(guild_id)
+
+                if (
+                    state.player is None
+                    or state.current is None
+                ):
+                    break
+
+                if not state.player.paused:
+                    await self.update_player(guild_id)
+
+                await asyncio.sleep(5)
+
+        except asyncio.CancelledError:
+            pass
 
     def cycle_loop_mode(
         self,
