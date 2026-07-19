@@ -46,7 +46,7 @@ class MusicManager:
             state.settings_loaded = True
 
         return state
-
+    
     async def update_player(
         self,
         guild_id: int,
@@ -73,6 +73,7 @@ class MusicManager:
                         ),
                     )
                 )
+
             else:
                 await state.player_message.edit(
                     embed=embed,
@@ -159,136 +160,14 @@ class MusicManager:
             state.queue.append(song)
             return False
 
-        state.current = song
-
-        await player.play(
-            song.track
-        )
-
-        await self.bot.lastfm.update_now_playing(
-            user_id=song.requester_id,
-            artist=song.artist,
-            track=song.title,
-        )
-
-        if state.scrobble_task is not None:
-            state.scrobble_task.cancel()
-
-        state.scrobble_task = asyncio.create_task(
-            self.schedule_scrobble(
-                interaction.guild.id,
-                song,
-            )
-        )
-
-        await self.update_player(
-            interaction.guild.id
-        )
-
-        if state.progress_task is not None:
-            state.progress_task.cancel()
-
-        state.progress_task = asyncio.create_task(
-            self.progress_updater(
-                interaction.guild.id,   # use player.guild.id inside play_next()
-            )
+        await self.start_song(
+            interaction.guild.id,
+            song,
         )
 
         return True
 
     #This method is for /playnext command
-    async def playnext(
-        self,
-        interaction: discord.Interaction,
-        song: Song,
-    ):
-        state = self.get_state(
-            interaction.guild.id
-        )
-
-        state.text_channel = interaction.channel
-
-        player = state.player
-
-        if player is None:
-            player = await self.join(
-                interaction
-            )
-
-        if player.playing:
-            state.queue.insert(
-                0,
-                song,
-            )
-
-            await self.update_player(
-                interaction.guild.id
-            )
-
-            return False
-
-        return await self.play(
-            interaction,
-            song,
-        )
-
-    async def schedule_scrobble(
-        self,
-        guild_id: int,
-        song: Song,
-    ):
-        print("schedule_scrobble started")
-
-        wait_time = min(
-            song.duration / 2000,
-            240,
-        )
-
-        try:
-            state = self.get_state(guild_id)
-            print(f"Waiting {wait_time} seconds")
-
-            await asyncio.sleep(wait_time)
-
-            print("Sleep finished")
-
-            await self.bot.lastfm.scrobble(
-                user_id=song.requester_id,
-                artist=song.artist,
-                track=song.title,
-                timestamp=int(time.time() - wait_time),
-            )
-
-            print("Last.fm scrobbled")
-
-            player = state.player
-
-            print(player)
-
-            if player:
-                print("Player exists")
-
-            if player and player.channel:
-                print("Channel exists")
-
-                for member in player.channel.members:
-                    print(member)
-
-                    if member.bot:
-                        continue
-
-                    self.bot.stats.record_play(
-                        guild_id,
-                        member.id,
-                        song,
-                    )
-
-            print("Done")
-
-        except Exception as e:
-            print("SCROBBLE ERROR:", repr(e))
-
-    #While this method is for the next button
     async def play_next(
         self,
         player: wavelink.Player,
@@ -298,9 +177,11 @@ class MusicManager:
         )
 
         if state.current is not None:
+
             if state.loop_mode == LoopMode.TRACK:
-                await player.play(
-                    state.current.track
+                await self.start_song(
+                    player.guild.id,
+                    state.current,
                 )
                 return
 
@@ -328,6 +209,10 @@ class MusicManager:
             if not state.queue:
                 state.current = None
 
+                if state.scrobble_task is not None:
+                    state.scrobble_task.cancel()
+                    state.scrobble_task = None
+
                 if state.progress_task is not None:
                     state.progress_task.cancel()
                     state.progress_task = None
@@ -340,16 +225,30 @@ class MusicManager:
 
         next_song = state.queue.pop(0)
 
-        state.current = next_song
-
-        await player.play(
-            next_song.track
+        await self.start_song(
+            player.guild.id,
+            next_song,
         )
 
+
+    async def start_song(
+        self,
+        guild_id: int,
+        song: Song,
+    ):
+        state = self.get_state(guild_id)
+        player = state.player
+        if player is None:
+            return
+
+        state.current = song
+
+        await player.play(song.track)
+
         await self.bot.lastfm.update_now_playing(
-            user_id=next_song.requester_id,
-            artist=next_song.artist,
-            track=next_song.title,
+            user_id=song.requester_id,
+            artist=song.artist,
+            track=song.title,
         )
 
         if state.scrobble_task is not None:
@@ -357,13 +256,9 @@ class MusicManager:
 
         state.scrobble_task = asyncio.create_task(
             self.schedule_scrobble(
-                player.guild.id,
-                next_song,
+                guild_id,
+                song,
             )
-        )
-
-        await self.update_player(
-            player.guild.id
         )
 
         if state.progress_task is not None:
@@ -371,9 +266,53 @@ class MusicManager:
 
         state.progress_task = asyncio.create_task(
             self.progress_updater(
-                player.guild.id,
+                guild_id,
             )
         )
+
+        await self.update_player(guild_id)
+
+
+    async def schedule_scrobble(
+        self,
+        guild_id: int,
+        song: Song,
+    ):
+        wait_time = min(
+            song.duration / 2000,
+            240,
+        )
+
+        try:
+            state = self.get_state(guild_id)
+
+            await asyncio.sleep(wait_time)
+
+            await self.bot.lastfm.scrobble(
+                user_id=song.requester_id,
+                artist=song.artist,
+                track=song.title,
+                timestamp=int(time.time() - wait_time),
+            )
+
+            player = state.player
+
+            if player and player.channel:
+                for member in player.channel.members:
+                    if member.bot:
+                        continue
+
+                    self.bot.stats.record_play(
+                        guild_id,
+                        member.id,
+                        song,
+                    )
+
+        except asyncio.CancelledError:
+            pass
+
+        except Exception as e:
+            print("SCROBBLE ERROR:", repr(e))
 
     async def skip(
         self,
@@ -565,6 +504,8 @@ class MusicManager:
     ):
         try:
             while True:
+                await asyncio.sleep(5)
+
                 state = self.get_state(guild_id)
 
                 if (
@@ -575,8 +516,6 @@ class MusicManager:
 
                 if not state.player.paused:
                     await self.update_player(guild_id)
-
-                await asyncio.sleep(5)
 
         except asyncio.CancelledError:
             pass

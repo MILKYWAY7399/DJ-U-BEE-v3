@@ -37,7 +37,7 @@ class DJUBEE(commands.Bot):
         self.radio = RadioProvider(self.lavalink)
         self.settings = SettingsProvider()
         self.stats = StatsProvider()
-
+        
     async def setup_hook(self):
         node = wavelink.Node(
             identifier="main",
