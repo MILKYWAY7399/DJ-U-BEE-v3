@@ -74,6 +74,7 @@ DJ U BEE v3 is a complete rewrite of my original Discord music bot, focused on c
 - Playlist sharing
 - Queue management (`/remove`, `/move`, `/jump`)
 - Dashboard
+- Yearly wrapped
 
 ---
 
