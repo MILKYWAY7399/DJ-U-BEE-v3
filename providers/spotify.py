@@ -47,7 +47,7 @@ class SpotifyProvider:
             ) as response:
 
                 data = await response.json()
-
+                print("Refresh response:", data)
                 if response.status != 200:
                     print(data)
 
@@ -82,9 +82,9 @@ class SpotifyProvider:
             ) as response:
 
                 if response.status != 200:
-                    text = await response.text()
-
-                    print(text)
+                    print("Status:", response.status)
+                    print("Headers:", dict(response.headers))
+                    print("Body:", await response.text())
 
                     raise RuntimeError(
                         f"Spotify API error ({response.status})"

@@ -1,8 +1,11 @@
 import asyncio
 import webbrowser
+from pathlib import Path
+import sys
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from oauth.callback_server import (
-    SpotifyCallbackServer,
+    CallbackServer,
 )
 from oauth.spotify_oauth import (
     SpotifyOAuth,
@@ -12,7 +15,7 @@ from oauth.spotify_oauth import (
 async def main():
     oauth = SpotifyOAuth()
 
-    server = SpotifyCallbackServer()
+    server = CallbackServer()
 
     await server.start()
 
