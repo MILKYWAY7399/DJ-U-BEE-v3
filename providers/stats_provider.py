@@ -18,11 +18,81 @@ class StatsProvider:
                 encoding="utf-8",
             ) as f:
                 self.data = json.load(f)
+
+            self.migrate_if_needed()
+
+            self.data.setdefault("users", {})
+            self.data.setdefault("guilds", {})
         else:
             self.data = {
-                "guilds": {}
+                "users": {},
+                "guilds": {},
             }
             self.save()
+
+
+    def migrate_if_needed(self):
+        # Already using the new format
+        if "users" in self.data:
+            return
+
+        old_guilds = self.data.get("guilds", {})
+
+        new_data = {
+            "users": {},
+            "guilds": {},
+        }
+
+        for guild_id, guild_data in old_guilds.items():
+
+            new_data["guilds"][guild_id] = {
+                "songs_played": sum(
+                    user["songs_played"]
+                    for user in guild_data["users"].values()
+                ),
+                "listening_time": sum(
+                    user["listening_time"]
+                    for user in guild_data["users"].values()
+                ),
+                "songs": dict(guild_data["songs"]),
+                "artists": dict(guild_data["artists"]),
+            }
+
+            for user_id, user_stats in guild_data["users"].items():
+
+                user = new_data["users"].setdefault(
+                    user_id,
+                    {
+                        "songs_played": 0,
+                        "listening_time": 0,
+                        "songs": {},
+                        "artists": {},
+                        "guilds": {},
+                    },
+                )
+
+                user["songs_played"] += user_stats["songs_played"]
+                user["listening_time"] += user_stats["listening_time"]
+
+                for song, plays in user_stats["songs"].items():
+                    user["songs"][song] = (
+                        user["songs"].get(song, 0) + plays
+                    )
+
+                for artist, plays in user_stats["artists"].items():
+                    user["artists"][artist] = (
+                        user["artists"].get(artist, 0) + plays
+                    )
+
+                user["guilds"][guild_id] = {
+                    "songs_played": user_stats["songs_played"],
+                    "listening_time": user_stats["listening_time"],
+                    "songs": dict(user_stats["songs"]),
+                    "artists": dict(user_stats["artists"]),
+                }
+
+        self.data = new_data
+        self.save()
 
     def save(self):
         with open(
@@ -42,17 +112,28 @@ class StatsProvider:
         user_id: int,
         song,
     ):
+        user = self.data["users"].setdefault(
+            str(user_id),
+            {
+                "songs_played": 0,
+                "listening_time": 0,
+                "songs": {},
+                "artists": {},
+                "guilds": {},
+            },
+        )
         guild = self.data["guilds"].setdefault(
             str(guild_id),
             {
-                "users": {},
+                "songs_played": 0,
+                "listening_time": 0,
                 "songs": {},
                 "artists": {},
             },
         )
 
-        user = guild["users"].setdefault(
-            str(user_id),
+        guild_user = user["guilds"].setdefault(
+            str(guild_id),
             {
                 "songs_played": 0,
                 "listening_time": 0,
@@ -80,6 +161,20 @@ class StatsProvider:
             + 1
         )
 
+        guild_user["songs_played"] += 1
+        guild_user["listening_time"] += song.duration
+
+        guild_user["songs"][song.title] = (
+            guild_user["songs"].get(song.title, 0) + 1
+        )
+
+        guild_user["artists"][song.artist] = (
+            guild_user["artists"].get(song.artist, 0) + 1
+        )
+
+        guild["songs_played"] += 1
+        guild["listening_time"] += song.duration
+        
         guild["songs"][song.title] = (
             guild["songs"].get(
                 song.title,
@@ -98,17 +193,23 @@ class StatsProvider:
 
         self.save()
 
-    def get_user_stats(
+    def get_global_user_stats(
+        self,
+        user_id: int,
+    ):
+        return self.data["users"].get(str(user_id))
+
+    def get_guild_user_stats(
         self,
         guild_id: int,
         user_id: int,
     ):
-        guild = self.data["guilds"].get(str(guild_id))
+        user = self.data["users"].get(str(user_id))
 
-        if guild is None:
+        if user is None:
             return None
 
-        return guild["users"].get(str(user_id))
+        return user["guilds"].get(str(guild_id))
 
 
     def format_time(
@@ -121,3 +222,9 @@ class StatsProvider:
         minutes = (seconds % 3600) // 60
 
         return f"{hours}h {minutes}m"
+
+    def get_guild_stats(
+        self,
+        guild_id: int,
+    ):
+        return self.data["guilds"].get(str(guild_id))

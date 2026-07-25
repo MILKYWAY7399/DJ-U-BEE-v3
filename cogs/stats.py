@@ -17,8 +17,7 @@ class Stats(commands.Cog):
         self,
         interaction: discord.Interaction,
     ):
-        stats = self.bot.stats.get_user_stats(
-            interaction.guild.id,
+        stats = self.bot.stats.get_global_user_stats(
             interaction.user.id,
         )
 
